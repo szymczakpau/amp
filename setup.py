@@ -1,4 +1,5 @@
-from distutils.core import setup
+from setuptools import find_packages
+from setuptools import setup
 
 setup(
       name='AMP',
@@ -7,5 +8,5 @@ setup(
       author='Paulina Szymczak',
       author_email='to@do.net',
       url='https://www.to.do.net/',
-      packages=['amp'],
+      packages=find_packages(),
 )
