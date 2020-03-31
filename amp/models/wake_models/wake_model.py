@@ -57,5 +57,18 @@ class WakeModel:
 class WakeModelsFactory:
 
     @staticmethod
-    def get_default(lr):
+    def get_default(
+            lr: float,
+            kl_weight: float,
+            discriminator: amp_discriminator.Discriminator,
+            decoder: amp_decoder.Decoder,
+            encoder: amp_encoder.Encoder,
+    ):
         optimizer = optimizers.Adam(lr=lr)
+        return WakeModel(
+            optimizer=optimizer,
+            kl_weight=kl_weight,
+            discriminator=discriminator,
+            decoder=decoder,
+            encoder=encoder,
+        )
