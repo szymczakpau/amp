@@ -54,7 +54,7 @@ class WakeModel:
         return vae
 
 
-class WakeModelsFactory:
+class WakeModelFactory:
 
     @staticmethod
     def get_default(
