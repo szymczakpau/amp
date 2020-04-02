@@ -51,6 +51,14 @@ class WakeModel:
         vae.metrics_tensors.append(metrics.reconstruction_loss(inputs, reconstructed))
         vae.metrics_names.append("rcl")
 
+        amino_acc, empty_acc = metrics.get_generation_acc()(inputs, reconstructed)
+
+        vae.metrics_tensors.append(amino_acc)
+        vae.metrics_names.append("amino_acc")
+
+        vae.metrics_tensors.append(empty_acc)
+        vae.metrics_names.append("empty_acc")
+
         return vae
 
 
