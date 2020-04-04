@@ -66,7 +66,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
     def __call__(self, input_=None):
         x = input_ if input_ is not None else layers.Input(shape=(self.DEFAULT_INPUT_SHAPE[1],))
         model = models.Model(x, self.output_tensor(x))
-        adam = optimizers.Adam(lr=0.01)
+        adam = optimizers.Adam(lr=1e-3)
 
         model.compile(
             loss='binary_crossentropy',
