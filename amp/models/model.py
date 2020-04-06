@@ -35,6 +35,13 @@ class Model:
     ) -> "Model":
         raise NotImplementedError
 
+    @staticmethod
+    def call_layer_on_input(layer: layers.Layer, input_: layers.Layer):
+        if hasattr(layer, 'loaded_weights') and layer.loaded_weights:
+            result = layer(input_)
+            layer.set_weights(layer.loaded_weights)
+            return result
+
 
 class ModelSerializer:
 
