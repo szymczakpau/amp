@@ -41,11 +41,11 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         else:
             x = input_
 
-        emb = self.embedding(x)
-        conv = self.convolution(emb)
-        pool = layers.MaxPooling1D(pool_size=5)(conv)
-        lstm = self.lstm(pool)
-        return self.dense_output(lstm)
+        emb = self.call_layer_on_input(self.embedding, x)
+        conv = self.call_layer_on_input(self.convolution, emb)
+        pool = self.call_layer_on_input(layers.MaxPooling1D(pool_size=5), conv)
+        lstm = self.call_layer_on_input(self.lstm, pool)
+        return self.call_layer_on_input(self.dense_output, lstm)
 
     def output_tensor_with_dense_input(self, input_: Optional[Any]):
         if input_ is None:
@@ -53,7 +53,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         else:
             x = input_
 
-        emb = self.dense_emb(x)
+        emb = self.call_layer_on_input(self.dense_emb, x)
         self.dense_emb.set_weights(self.embedding.get_weights())
         self.dense_emb.trainable = self.embedding.trainable
 
