@@ -41,6 +41,7 @@ class Model:
             result = layer(input_)
             layer.set_weights(layer.loaded_weights)
             return result
+        return layer(input_)
 
 
 class ModelSerializer:
