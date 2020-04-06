@@ -68,5 +68,5 @@ class DictModelLayerCollection(model.ModelLayerCollection):
         ]
         weights = [np.load(weight_path) for weight_path in weight_paths]
         layers.Layer.loaded_weights = None
-        layers.Layer.loaded_weights = weights
+        layer.loaded_weights = weights
         return layer
