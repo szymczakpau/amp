@@ -62,11 +62,11 @@ class DictModelLayerCollection(model.ModelLayerCollection):
         layer = layers.deserialize(
             config=config,
         )
-        weight_paths = [
+        weight_paths = sorted([
             os.path.join(path, weight_name)
             for weight_name in os.listdir(path) if weight_name.endswith(cls.WEIGHT_NAME)
-        ]
+        ])
         weights = [np.load(weight_path) for weight_path in weight_paths]
         layers.Layer.loaded_weights = None
-        layers.Layer.loaded_weights = weights
+        layer.loaded_weights = weights
         return layer

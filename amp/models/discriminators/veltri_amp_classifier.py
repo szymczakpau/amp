@@ -41,11 +41,11 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         else:
             x = input_
 
-        emb = self.embedding(x)
-        conv = self.convolution(emb)
-        pool = layers.MaxPooling1D(pool_size=5)(conv)
-        lstm = self.lstm(pool)
-        return self.dense_output(lstm)
+        emb = self.call_layer_on_input(self.embedding, x)
+        conv = self.call_layer_on_input(self.convolution, emb)
+        pool = self.call_layer_on_input(layers.MaxPooling1D(pool_size=5), conv)
+        lstm = self.call_layer_on_input(self.lstm, pool)
+        return self.call_layer_on_input(self.dense_output, lstm)
 
     def output_tensor_with_dense_input(self, input_: Optional[Any]):
         if input_ is None:
@@ -53,7 +53,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         else:
             x = input_
 
-        emb = self.dense_emb(x)
+        emb = self.call_layer_on_input(self.dense_emb, x)
         self.dense_emb.set_weights(self.embedding.get_weights())
         self.dense_emb.trainable = self.embedding.trainable
 
@@ -90,11 +90,11 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         return {
             'type': type(self).__name__,
             'name': self.name,
+            'input_shape': self.input_shape,
         }
 
     def get_layers_with_names(self) -> Dict[str, layers.Layer]:
         return {
-
             f'{self.name}_embedding': self.embedding,
             f'{self.name}_lstm': self.lstm,
             f'{self.name}_convolution': self.convolution,
@@ -113,6 +113,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
             convolution=layer_collection[config_dict['name'] + '_convolution'],
             lstm=layer_collection[config_dict['name'] + '_lstm'],
             dense_output=layer_collection[config_dict['name'] + '_dense_output'],
+            input_shape=config_dict['input_shape'],
         )
 
 
@@ -144,5 +145,5 @@ class VeltriAMPClassifierFactory:
             convolution=conv,
             lstm=lstm,
             dense_output=dense_output,
-            input_shape = (max_length, 20)
+            input_shape=(max_length, 20)
         )
