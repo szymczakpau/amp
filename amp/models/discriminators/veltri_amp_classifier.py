@@ -15,7 +15,6 @@ class VeltriAMPClassifier(discriminator.Discriminator):
     The discriminator part of cVAE.
     AMP classifier based on Veltri et al.(2018)
     """
-    DEFAULT_INPUT_SHAPE = (21, 100)
 
     def __init__(
             self,
@@ -23,6 +22,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
             convolution: layers.Layer,
             lstm: layers.Layer,
             dense_output: layers.Layer,
+            input_shape,
             name: str = 'VeltriAMPClassifier',
     ):
         self.embedding = embedding
@@ -30,14 +30,14 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         self.lstm = lstm
         self.dense_output = dense_output
         self.name = name
-
+        self.input_shape = input_shape
         # TBD
         self.dense_emb = layers.Dense(self.embedding.output_dim, use_bias=False)
 
     def output_tensor(self, input_=None):
 
         if input_ is None:
-            x = layers.Input(shape=self.DEFAULT_INPUT_SHAPE)
+            x = layers.Input(shape=self.input_shape)
         else:
             x = input_
 
@@ -49,7 +49,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
 
     def output_tensor_with_dense_input(self, input_: Optional[Any]):
         if input_ is None:
-            x = layers.Input(shape=(self.DEFAULT_INPUT_SHAPE[1], 20))
+            x = layers.Input(shape=(self.input_shape[0], 20))
         else:
             x = input_
 
@@ -64,7 +64,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         return self.dense_output(lstm)
 
     def __call__(self, input_=None):
-        x = input_ if input_ is not None else layers.Input(shape=(self.DEFAULT_INPUT_SHAPE[1],))
+        x = input_ if input_ is not None else layers.Input(shape=(self.input_shape[0],))
         model = models.Model(x, self.output_tensor(x))
         adam = optimizers.Adam(lr=1e-3)
 
@@ -119,12 +119,12 @@ class VeltriAMPClassifier(discriminator.Discriminator):
 class VeltriAMPClassifierFactory:
 
     @staticmethod
-    def get_default() -> VeltriAMPClassifier:
+    def get_default(max_length) -> VeltriAMPClassifier:
 
         emb = layers.Embedding(
             input_dim=20,
-            output_dim=64,
-            input_length=100,
+            output_dim=128,
+            input_length=max_length,
         )
         conv = layers.Convolution1D(
             filters=64,
@@ -144,4 +144,5 @@ class VeltriAMPClassifierFactory:
             convolution=conv,
             lstm=lstm,
             dense_output=dense_output,
+            input_shape = (max_length, 20)
         )
