@@ -19,6 +19,7 @@ class DictModelLayerCollection(model.ModelLayerCollection):
     def __add__(self, layers_with_names: Dict[str, layers.Layer]):
         for layer_name, layer in layers_with_names.items():
             self._dict_to_layer[layer_name] = layer
+        return self
 
     def __getitem__(self, item: str) -> layers.Layer:
         return self._dict_to_layer[item]
