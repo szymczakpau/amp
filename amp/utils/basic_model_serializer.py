@@ -2,6 +2,7 @@ import json
 import os
 
 from amp.models import model as amp_model
+from amp.models import model_garden
 from amp.utils import dict_model_layer_collection
 
 
@@ -20,3 +21,16 @@ class BasicModelSerializer(amp_model.ModelSerializer):
         )
         layer_saving_path = os.path.join(path, self.LAYER_DIR_NAME)
         model_layer_collection.save(layer_saving_path)
+
+    def load_model(self, path: str) -> amp_model.Model:
+        model_config_path = os.path.join(path, self.MODEL_CONFIG_NAME)
+        with open(model_config_path, 'r') as json_handle:
+            model_config = json.load(json_handle)
+        model_class = model_garden.MODEL_GAREDN[model_config['type']]
+        model_layer_collection_path = os.path.join(path, self.LAYER_DIR_NAME)
+        return model_class.from_config_dict_and_layer_collection(
+            config_dict=model_config,
+            layer_collection=dict_model_layer_collection.DictModelLayerCollection.load(
+                path=model_layer_collection_path,
+            )
+        )
