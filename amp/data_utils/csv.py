@@ -116,6 +116,8 @@ def get_various_lengths_csv(
             writer.writerow(['Name', 'Sequence'])
 
         for line_number, row in enumerate(reader):
+            if line_number == 0:
+                continue
             seq = row[1]
             for writer, max_len in zip(writers, max_lengths):
                 if sequence.check_length(seq, min_length, max_len):
