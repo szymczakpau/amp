@@ -22,3 +22,6 @@ class Discriminator(model.Model, ABC):
 
     def unfreeze_layers(self):
         raise NotImplementedError
+
+    def train_for_n_epochs_with_batch_size(self, epochs: int, batch_size: int, **kwargs):
+        raise NotImplementedError

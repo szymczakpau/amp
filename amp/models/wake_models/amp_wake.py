@@ -12,7 +12,6 @@ from amp.utils import metrics
 
 class AMPWakeModel(wake.WakeModel):
 
-
     def __init__(
             self,
             kl_weight: float,
