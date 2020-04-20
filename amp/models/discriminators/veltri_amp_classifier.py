@@ -22,7 +22,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
             convolution: layers.Layer,
             lstm: layers.Layer,
             dense_output: layers.Layer,
-            input_shape,
+            input_shape: tuple,
             name: str = 'VeltriAMPClassifier',
     ):
         self.embedding = embedding
@@ -57,11 +57,11 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         self.dense_emb.set_weights(self.embedding.get_weights())
         self.dense_emb.trainable = self.embedding.trainable
 
-        conv = self.convolution(emb)
+        conv = self.call_layer_on_input(self.convolution, emb)
 
-        pool = layers.MaxPooling1D(pool_size=5)(conv)
-        lstm = self.lstm(pool)
-        return self.dense_output(lstm)
+        pool = self.call_layer_on_input(layers.MaxPooling1D(pool_size=5), conv)
+        lstm = self.call_layer_on_input(self.lstm, pool)
+        return self.call_layer_on_input(self.dense_output, lstm)
 
     def __call__(self, input_=None):
         x = input_ if input_ is not None else layers.Input(shape=(self.input_shape[0],))
@@ -120,7 +120,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
 class VeltriAMPClassifierFactory:
 
     @staticmethod
-    def get_default(max_length) -> VeltriAMPClassifier:
+    def get_default(max_length: int) -> VeltriAMPClassifier:
 
         emb = layers.Embedding(
             input_dim=20,

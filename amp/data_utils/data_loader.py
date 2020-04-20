@@ -153,7 +153,6 @@ class ClassifierDataFilter():
 
     def filter_by_length(self):
         self.positive_data = self._filter_by_length(self.positive_data)
-        self.negative_data = self._filter_by_length(self.negative_data)
         return self.positive_data, self.negative_data
 
 
@@ -216,7 +215,7 @@ class ClassifierDataEqualizer():
 
         negative_seq = self.negative_data['Sequence'].tolist()
         negative_lengths = [len(seq) for seq in negative_seq]
-        self.negative_data["Sequence length"] = negative_lengths
+        self.negative_data.loc[:, "Sequence length"] = negative_lengths
 
         probs = self._get_probs(positive_lengths)
         new_negative_lengths = random.choices(list(probs.keys()), probs.values(), k=len(negative_lengths))
@@ -248,9 +247,9 @@ class ClassifierDataSplitter():
         self.val_size = val_size
         self.vocab_size = vocab_size
 
-    def join_datas(self):
-        self.positive_data['Label'] = 1
-        self.negative_data['Label'] = 0
+    def join_datasets(self):
+        self.positive_data.loc[:, 'Label'] = 1
+        self.negative_data.loc[:, 'Label'] = 0
         self.merged = pd.concat([self.positive_data, self.negative_data])
         return self.merged
 
@@ -283,7 +282,7 @@ class ClassifierDataSplitter():
         )
 
     def get_train_test_val(self):
-        self.join_datas()
+        self.join_datasets()
 
         x = np.asarray(self.merged['Sequence'].tolist())
         y = np.asarray(self.merged['Label'].tolist())

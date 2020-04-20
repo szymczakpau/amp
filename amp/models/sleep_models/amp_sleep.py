@@ -3,21 +3,24 @@ from keras import optimizers
 from keras import models
 from keras import metrics
 
+from amp.models.sleep_models import sleep
 from amp.models.discriminators import discriminator as amp_discriminator
 from amp.models.decoders import decoder as amp_decoder
 
-class SleepModel():
+class AMPSleepModel(sleep.SleepModel):
 
     def __init__(
             self,
             optimizer: optimizers.Optimizer,
             discriminator: amp_discriminator.Discriminator,
-            decoder: amp_decoder.Decoder
+            decoder: amp_decoder.Decoder,
+            name: str = 'AMPSleepModel'
 
     ):
         self.optimizer = optimizer
         self.discriminator = discriminator
         self.decoder = decoder
+        self.name = name
 
     def call(self):
         z_input = layers.Input(shape=(self.decoder.latent_dim - 1,))
@@ -49,7 +52,7 @@ class SleepModelFactory:
             decoder: amp_decoder.Decoder,
     ):
         optimizer = optimizers.Adam(lr=lr)
-        return SleepModel(
+        return AMPSleepModel(
             optimizer=optimizer,
             discriminator=discriminator,
             decoder=decoder,
