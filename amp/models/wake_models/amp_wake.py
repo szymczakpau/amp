@@ -2,6 +2,7 @@ from keras import layers
 from keras import optimizers
 from keras import models
 
+from amp.models.wake_models import wake
 from amp.models.decoders import decoder as amp_decoder
 from amp.models.discriminators import discriminator as amp_discriminator
 from amp.models.encoders import encoder as amp_encoder
@@ -9,26 +10,29 @@ from amp.layers import vae_loss
 from amp.utils import metrics
 
 
-class WakeModel:
+class AMPWakeModel(wake.WakeModel):
 
-    DEFAULT_SHAPE = (20, 100)
 
     def __init__(
             self,
             kl_weight: float,
+            input_shape: tuple,
             optimizer: optimizers.Optimizer,
             discriminator: amp_discriminator.Discriminator,
             decoder: amp_decoder.Decoder,
             encoder: amp_encoder.Encoder,
+            name: str = 'AMPWakeModel'
     ):
         self.kl_weight = kl_weight
+        self.input_shape = input_shape
         self.optimizer = optimizer
         self.encoder = encoder
         self.decoder = decoder
         self.discriminator = discriminator
+        self.name = name
 
     def call(self, inputs=None):
-        inputs = inputs if inputs is not None else layers.Input(shape=(self.DEFAULT_SHAPE[1],))
+        inputs = inputs if inputs is not None else layers.Input(shape=(self.input_shape[0],))
         z_mean, z_sigma, z = self.encoder.output_tensor(inputs)
         disc_out = self.discriminator.output_tensor(inputs)
         z_cond = layers.concatenate([z, disc_out])
@@ -68,14 +72,16 @@ class WakeModelFactory:
     def get_default(
             lr: float,
             kl_weight: float,
+            max_length: int,
             discriminator: amp_discriminator.Discriminator,
             decoder: amp_decoder.Decoder,
             encoder: amp_encoder.Encoder,
     ):
         optimizer = optimizers.Adam(lr=lr)
-        return WakeModel(
+        return AMPWakeModel(
             optimizer=optimizer,
             kl_weight=kl_weight,
+            input_shape=(max_length, 20),
             discriminator=discriminator,
             decoder=decoder,
             encoder=encoder,

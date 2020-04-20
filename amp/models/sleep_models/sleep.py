@@ -4,9 +4,10 @@ from typing import Optional
 
 from amp.models import model
 
-class Decoder(model.Model, ABC):
-    def output_tensor(self, input_: Optional[Any] = None):
-        raise NotImplementedError
+
+class SleepModel(model.Model, ABC):
+    """ Model with sleep phase of VAE """
 
     def __call__(self, input_: Optional[Any] = None):
         raise NotImplementedError
+
