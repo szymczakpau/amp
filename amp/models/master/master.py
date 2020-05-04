@@ -47,7 +47,7 @@ class MasterAMPTrainer:
         discriminator_output = self.discriminator.output_tensor_with_dense_input(
             input_=reconstructed,
         )
-        vae = models.Model(inputs, discriminator_output)
+        vae = models.Model([inputs, amp_in], discriminator_output)
 
         vae.compile(
             optimizer=self.master_optimizer,
