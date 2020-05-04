@@ -45,7 +45,7 @@ class MasterAMPTrainer:
             kl_weight=self.kl_weight
         )([inputs, reconstructed, z_mean, z_sigma])
         discriminator_output = self.discriminator.output_tensor_with_dense_input(
-            input=reconstructed,
+            input_=reconstructed,
         )
         vae = models.Model(inputs, discriminator_output)
 
