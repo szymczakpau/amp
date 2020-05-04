@@ -1,61 +1,77 @@
-import numpy as np
+from typing import Optional
 
-from amp.models import model
-from amp.models import conditional_vae as cv
+from keras import layers
+from keras import models
+from keras import optimizers
+
+from amp.layers import vae_loss
+from amp.models.encoders import encoder as amp_encoder
+from amp.models.decoders import decoder as amp_decoder
+from amp.models.discriminators import discriminator as amp_discriminator
+from amp.utils import metrics
 
 
-class MasterModel(model.Model):
+class DataGenerator:
+    pass
+
+
+class MasterAMPTrainer:
 
     def __init__(
             self,
-            labeled_dataset_train,
-            labeled_dataset_val,
-            prior_label,
-            unlabled_dataset,
-            unlabeled_prior,
-            encoder,
-            decoder,
-            discriminator,
+            amp_data_generator: DataGenerator,
+            unlabeled_data_generator: DataGenerator,
+            encoder: amp_encoder.Encoder,
+            decoder: amp_decoder.Decoder,
+            discriminator: amp_discriminator,
+            kl_weight: float,
+            master_optimizer: optimizers.Optimizer,
     ):
-        # TODO add rates etc.
-        self.labeled_dataset_train = labeled_dataset_train
-        self.labeled_dataset_val = labeled_dataset_val
-        self.prior_label = prior_label
-        self.unlabeled_prior = unlabeled_prior
-        self.unlabled_dataset = unlabled_dataset
+        self.amp_data_generator = amp_data_generator
+        self.unlabeled_data_generator = unlabeled_data_generator
         self.encoder = encoder
         self.decoder = decoder
         self.discriminator = discriminator
+        self.kl_weight = kl_weight
+        self.master_optimizer = master_optimizer
 
-    def train_base_conditional_vae(self, epochs: int, batch_size: int):
-        cv.ConditionalVae(encoder=self.encoder, decoder=self.decoder)
-        conditional_vae_dataset = self.unlabled_dataset & self.prior_label
-        cv.train_on_dataset(
-            epochs=epochs,
-            batch_size=batch_size,
-            dataset=conditional_vae_dataset,
+    def build(self, input_shape: Optional):
+        inputs = layers.Input(shape=(input_shape[0],))
+        z_mean, z_sigma, z = self.encoder.output_tensor(inputs)
+        amp_in = layers.Input(shape=(1,))
+        z_cond = layers.concatenate([z, amp_in])
+        reconstructed = self.decoder.output_tensor(z_cond)
+        y = vae_loss.VAELoss(
+            kl_weight=self.kl_weight
+        )([inputs, reconstructed, z_mean, z_sigma])
+        discriminator_output = self.discriminator.output_tensor_with_dense_input(
+            input=reconstructed,
+        )
+        vae = models.Model(inputs, discriminator_output)
+
+        vae.compile(
+            optimizer=self.master_optimizer,
+            loss='binary_crossentropy',
+            metrics=['acc', 'binary_crossentropy']
         )
 
-    def train_step(self):
-        self.sleep_step()
-        self.wake_step()
+        vae.metrics_tensors.append(metrics.kl_loss(z_mean, z_sigma))
+        vae.metrics_names.append("kl")
 
-    def sleep_step(self):
-        sleep_batch = self._sleep_data_generator()
-        self.discriminator.sleep_train_generator(sleep_batch)
+        vae.metrics_tensors.append(
+            metrics.sparse_categorical_accuracy(inputs, reconstructed),
+        )
+        vae.metrics_names.append("acc")
 
-    def wake_step(self):
-        pass
+        vae.metrics_tensors.append(metrics.reconstruction_loss(inputs, reconstructed))
+        vae.metrics_names.append("rcl")
 
-    def _imaginary_data_generator(self):
-        while True:
-            unlabeled_prior_sample = self.unlabeled_prior.next() # z
-            prior_sample = self.prior_label.next() # c
-            slept_example = self.decoder.predict([unlabeled_prior_sample, prior_sample])
-            yield [slept_example, prior_sample]
+        amino_acc, empty_acc = metrics.get_generation_acc()(inputs, reconstructed)
 
-    def _sleep_data_generator(self):
-        while True:
-            imaginary_data = next(self._imaginary_data_generator())
-            true_data = next(self.labeled_dataset_train)
-            yield np.concatenate(imaginary_data[0], true_data[0]), np.concatenate(imaginary_data[1] + true_data[1])
+        vae.metrics_tensors.append(amino_acc)
+        vae.metrics_names.append("amino_acc")
+
+        vae.metrics_tensors.append(empty_acc)
+        vae.metrics_names.append("empty_acc")
+
+        return vae
