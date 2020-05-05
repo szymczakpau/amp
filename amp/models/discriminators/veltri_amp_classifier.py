@@ -80,11 +80,15 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         self.embedding.trainable = False
         self.convolution.trainable = False
         self.lstm.trainable = False
+        self.dense_emb.trainable = False
+        self.dense_output.trainable = False
 
     def unfreeze_layers(self):
         self.embedding.trainable = True
         self.convolution.trainable = True
         self.lstm.trainable = True
+        self.dense_emb.trainable = True
+        self.dense_output.trainable = True
 
     def get_config_dict(self) -> Dict:
         return {
