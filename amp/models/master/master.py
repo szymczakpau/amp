@@ -47,6 +47,7 @@ class MasterAMPTrainer:
             input_=reconstructed,
         )
         self.discriminator.freeze_layers()
+
         vae = models.Model([inputs, amp_in], discriminator_output)
 
         kl_metric = metrics.kl_loss(z_mean, z_sigma)
