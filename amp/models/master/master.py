@@ -14,7 +14,6 @@ from amp.utils import metrics
 class DataGenerator:
     pass
 
-
 class MasterAMPTrainer:
 
     def __init__(
@@ -47,31 +46,43 @@ class MasterAMPTrainer:
         discriminator_output = self.discriminator.output_tensor_with_dense_input(
             input_=reconstructed,
         )
+        self.discriminator.freeze_layers()
         vae = models.Model([inputs, amp_in], discriminator_output)
+
+        kl_metric = metrics.kl_loss(z_mean, z_sigma)
+
+        def _kl_metric(y_true, y_pred):
+          return kl_metric
+
+        reconstruction_acc = metrics.sparse_categorical_accuracy(inputs, reconstructed)
+
+        def _reconstruction_acc(y_true, y_pred):
+          return reconstruction_acc
+
+        rcl = metrics.reconstruction_loss(inputs, reconstructed)
+
+        def _rcl(y_true, y_pred):
+          return rcl
+
+        amino_acc, empty_acc = metrics.get_generation_acc()(inputs, reconstructed)
+
+        def _amino_acc(y_true, y_pred):
+          return amino_acc
+
+        def _empty_acc(y_true, y_pred):
+          return empty_acc
 
         vae.compile(
             optimizer=self.master_optimizer,
             loss='binary_crossentropy',
-            metrics=['acc', 'binary_crossentropy']
+            metrics=[
+                     'acc',
+                     'binary_crossentropy',
+                     _kl_metric,
+                     _amino_acc,
+                     _empty_acc,
+                     _rcl,
+                     _reconstruction_acc,
+                     ]
         )
-
-        vae.metrics_tensors.append(metrics.kl_loss(z_mean, z_sigma))
-        vae.metrics_names.append("kl")
-
-        vae.metrics_tensors.append(
-            metrics.sparse_categorical_accuracy(inputs, reconstructed),
-        )
-        vae.metrics_names.append("acc")
-
-        vae.metrics_tensors.append(metrics.reconstruction_loss(inputs, reconstructed))
-        vae.metrics_names.append("rcl")
-
-        amino_acc, empty_acc = metrics.get_generation_acc()(inputs, reconstructed)
-
-        vae.metrics_tensors.append(amino_acc)
-        vae.metrics_names.append("amino_acc")
-
-        vae.metrics_tensors.append(empty_acc)
-        vae.metrics_names.append("empty_acc")
-
         return vae
