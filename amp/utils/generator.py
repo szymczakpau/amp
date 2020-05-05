@@ -50,7 +50,11 @@ class UniprotGenerator:
                             break
 
     def to_one_hot(self, x):
-        return [text.one_hot((" ".join(seq)), self.vocab_size) for seq in x]
+        alphabet = list('ACDEFGHIKLMNPQRSTVWY')
+        classes = range(1, 21)
+        aa_encoding = dict(zip(alphabet, classes))
+
+        return [[aa_encoding[aa] for aa in seq] for seq in x]
 
     def pad(self, x):
         return sequence.pad_sequences(
