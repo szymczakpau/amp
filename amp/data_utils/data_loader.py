@@ -271,7 +271,11 @@ class ClassifierDataSplitter():
         return (x_train, x_test, x_val, y_train, y_test, y_val)
 
     def _to_one_hot(self, x):
-        return [text.one_hot((" ".join(seq)), self.vocab_size) for seq in x]
+        alphabet = list('ACDEFGHIKLMNPQRSTVWY')
+        classes = range(1, 21)
+        aa_encoding = dict(zip(alphabet, classes))
+
+        return [[aa_encoding[aa] for aa in seq] for seq in x]
 
     def _pad(self, x):
         return sequence.pad_sequences(
