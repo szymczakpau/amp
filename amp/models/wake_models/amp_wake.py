@@ -80,7 +80,7 @@ class WakeModelFactory:
         return AMPWakeModel(
             optimizer=optimizer,
             kl_weight=kl_weight,
-            input_shape=(max_length, 20),
+            input_shape=(max_length, 21),
             discriminator=discriminator,
             decoder=decoder,
             encoder=encoder,

@@ -49,7 +49,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
 
     def output_tensor_with_dense_input(self, input_: Optional[Any]):
         if input_ is None:
-            x = layers.Input(shape=(self.input_shape[0], 20))
+            x = layers.Input(shape=(self.input_shape[0], 21))
         else:
             x = input_
 
@@ -127,7 +127,7 @@ class VeltriAMPClassifierFactory:
     def get_default(max_length: int) -> VeltriAMPClassifier:
 
         emb = layers.Embedding(
-            input_dim=20,
+            input_dim=21,
             output_dim=128,
             input_length=max_length,
         )
@@ -149,5 +149,5 @@ class VeltriAMPClassifierFactory:
             convolution=conv,
             lstm=lstm,
             dense_output=dense_output,
-            input_shape=(max_length, 20)
+            input_shape=(max_length, 21)
         )

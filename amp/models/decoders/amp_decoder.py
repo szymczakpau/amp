@@ -76,7 +76,7 @@ class AMPDecoderFactory:
             latent_dim,
             max_length,
         )
-        dense = layers.Dense(20)
+        dense = layers.Dense(21)
         return AMPDecoder(
             latent_dim=latent_dim,
             recurrent_autoregressive=recurrent_autoregressive,
