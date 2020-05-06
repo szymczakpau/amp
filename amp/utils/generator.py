@@ -36,7 +36,9 @@ class UniprotGenerator:
                 reader = csv.reader(csv_file)
                 current_batch = []
                 current_batch_index = 0
-                for row in reader:
+                for line_number, row in enumerate(reader):
+                    if line_number == 0:
+                        continue
                     current_batch.append(row[1])  # Only sequence
                     current_batch_index += 1
                     current_file_index += 1
