@@ -80,7 +80,7 @@ class MasterAMPTrainer:
         vae.compile(
             optimizer=self.master_optimizer,
             loss=['binary_crossentropy', 'mae'],
-            loss_weights=[0.3, 1.0],
+            # loss_weights=[0.3, 1.0],
             metrics=[
                 ['acc', 'binary_crossentropy'],
                 [_kl_metric, _rcl, _reconstruction_acc, _amino_acc, _empty_acc]
