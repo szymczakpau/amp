@@ -18,21 +18,22 @@ class MasterAMPTrainer:
 
     def __init__(
             self,
-            amp_data_generator: DataGenerator,
-            unlabeled_data_generator: DataGenerator,
             encoder: amp_encoder.Encoder,
             decoder: amp_decoder.Decoder,
             discriminator: amp_discriminator,
             kl_weight: float,
             master_optimizer: optimizers.Optimizer,
     ):
-        self.amp_data_generator = amp_data_generator
-        self.unlabeled_data_generator = unlabeled_data_generator
+
         self.encoder = encoder
         self.decoder = decoder
         self.discriminator = discriminator
         self.kl_weight = kl_weight
         self.master_optimizer = master_optimizer
+
+    @staticmethod
+    def _zero_loss(y_true, y_pred):
+        return tf.constant(0.0)
 
     def build(self, input_shape: Optional):
         inputs = layers.Input(shape=(input_shape[0],))
@@ -41,19 +42,22 @@ class MasterAMPTrainer:
         z_cond = layers.concatenate([z, amp_in])
         reconstructed = self.decoder.output_tensor(z_cond)
         y = vae_loss.VAELoss(
-            kl_weight=self.kl_weight
+            kl_weight=self.kl_weight,
         )([inputs, reconstructed, z_mean, z_sigma])
         discriminator_output = self.discriminator.output_tensor_with_dense_input(
             input_=reconstructed,
         )
         self.discriminator.freeze_layers()
 
-        vae = models.Model([inputs, amp_in], discriminator_output)
+        vae = models.Model(
+            inputs=[inputs, amp_in],
+            outputs=[discriminator_output, y]
+            )
 
         kl_metric = metrics.kl_loss(z_mean, z_sigma)
 
         def _kl_metric(y_true, y_pred):
-          return kl_metric
+            return kl_metric
 
         reconstruction_acc = metrics.sparse_categorical_accuracy(inputs, reconstructed)
 
@@ -75,15 +79,11 @@ class MasterAMPTrainer:
 
         vae.compile(
             optimizer=self.master_optimizer,
-            loss='binary_crossentropy',
+            loss=['binary_crossentropy', 'mae'],
+            loss_weights=[0.3, 1.0],
             metrics=[
-                     'acc',
-                     'binary_crossentropy',
-                     _kl_metric,
-                     _amino_acc,
-                     _empty_acc,
-                     _rcl,
-                     _reconstruction_acc,
-                     ]
+                ['acc', 'binary_crossentropy'],
+                [_kl_metric, _rcl, _reconstruction_acc, _amino_acc, _empty_acc]
+                ]
         )
         return vae
