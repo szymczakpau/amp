@@ -20,14 +20,13 @@ class VAELoss(layers.Layer):
             z_sigma,
             z_mean,
     ):
-        rcl = backend.mean(
+        rcl = 32 * backend.mean(
             keras_metrics.sparse_categorical_crossentropy(x, generated_x), axis=-1)
         kl_loss = - 0.5 * backend.sum(1 + z_sigma -
                                       backend.square(z_mean) -
                                       backend.exp(z_sigma),
                                       axis=-1)
         return rcl + (self.kl_weight * kl_loss)
-
     def call(self, inputs):
         x = inputs[0]
         generated_x = inputs[1]
