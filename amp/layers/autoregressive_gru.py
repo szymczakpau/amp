@@ -29,7 +29,7 @@ class AutoregressiveGRU(layers.Layer):
                 current_output,
                 initial_state=current_state,
             )
-            if hasattr(self.recurrent, 'loaded_weights'):
+            if hasattr(self.recurrent, 'loaded_weights') and self.recurrent.loaded_weights is not None:
                 self.recurrent.set_weights(self.recurrent.loaded_weights)
             outputs.append(current_output)
         result = layers.concatenate(outputs, axis=1)
