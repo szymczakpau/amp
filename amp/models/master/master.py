@@ -119,10 +119,10 @@ class MasterAMPTrainer(amp_model.Model):
 
     def get_layers_with_names(self) -> Dict[str, layers.Layer]:
         layers_with_names = {}
-        for name, layer in self.encoder.get_layers_with_names():
+        for name, layer in self.encoder.get_layers_with_names().items():
             layers_with_names[name] = layer
-        for name, layer in self.decoder.get_layers_with_names():
+        for name, layer in self.decoder.get_layers_with_names().items():
             layers_with_names[name] = layer
-        for name, layer in self.discriminator.get_layers_with_names():
+        for name, layer in self.discriminator.get_layers_with_names().items():
             layers_with_names[name] = layer
         return layers_with_names
