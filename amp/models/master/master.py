@@ -7,9 +7,12 @@ from keras import optimizers
 
 from amp.layers import vae_loss
 from amp.models import model as amp_model
-from amp.models.encoders import encoder as amp_encoder
-from amp.models.decoders import decoder as amp_decoder
-from amp.models.discriminators import discriminator as amp_discriminator
+from amp.models.encoders import amp_encoder
+from amp.models.decoders import amp_decoder
+from amp.models.encoders import encoder as enc
+from amp.models.decoders import decoder as dec
+from amp.models.discriminators import veltri_amp_classifier
+from amp.models.discriminators import discriminator as disc
 from amp.utils import metrics
 
 
@@ -17,9 +20,9 @@ class MasterAMPTrainer(amp_model.Model):
 
     def __init__(
             self,
-            encoder: amp_encoder.Encoder,
-            decoder: amp_decoder.Decoder,
-            discriminator: amp_discriminator,
+            encoder: enc.Encoder,
+            decoder: dec.Decoder,
+            discriminator: disc.Discriminator,
             kl_weight: float,
             master_optimizer: optimizers.Optimizer,
     ):
@@ -102,15 +105,15 @@ class MasterAMPTrainer(amp_model.Model):
             layer_collection: amp_model.ModelLayerCollection,
     ) -> "MasterAMPTrainer":
         return cls(
-            encoder=amp_encoder.Encoder.from_config_dict_and_layer_collection(
+            encoder=amp_encoder.AMPEncoder.from_config_dict_and_layer_collection(
                 config_dict=config_dict['encoder_config_dict'],
                 layer_collection=layer_collection,
             ),
-            decoder=amp_decoder.Decoder.from_config_dict_and_layer_collection(
+            decoder=amp_decoder.AMPDecoder.from_config_dict_and_layer_collection(
                 config_dict=config_dict['decoder_config_dict'],
                 layer_collection=layer_collection,
             ),
-            discriminator=amp_discriminator.Discriminator.from_config_dict_and_layer_collection(
+            discriminator=veltri_amp_classifier.VeltriAMPClassifier.from_config_dict_and_layer_collection(
                 config_dict=config_dict['discriminator_config_dict'],
                 layer_collection=layer_collection,
             ),
