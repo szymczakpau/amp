@@ -29,6 +29,8 @@ class AutoregressiveGRU(layers.Layer):
                 current_output,
                 initial_state=current_state,
             )
+            if hasattr(self.recurrent, 'loaded_weights'):
+                self.recurrent.set_weights(self.recurrent.loaded_weights)
             outputs.append(current_output)
         result = layers.concatenate(outputs, axis=1)
         result = backend.reshape(result, (-1, self.output_len, self.output_dim))
