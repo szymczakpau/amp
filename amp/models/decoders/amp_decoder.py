@@ -43,7 +43,7 @@ class AMPDecoder(decoder.Decoder):
             'type': type(self).__name__,
             'name': self.name,
             'latent_dim': self.latent_dim,
-            'gumbel_temperatature': backend.eval(self.activation.temperature),
+            'gumbel_temperatature': str(backend.eval(self.activation.temperature)),
             'output_dim' : self.latent_to_hidden.output_dim,
             'output_len': self.latent_to_hidden.output_len,
         }
@@ -60,7 +60,7 @@ class AMPDecoder(decoder.Decoder):
             config_dict: Dict,
             layer_collection: model.ModelLayerCollection,
     ) -> "AMPDecoder":
-        temperature = backend.variable(config_dict['gumbel_temperatature'], name="temperature")
+        temperature = backend.variable(float(config_dict['gumbel_temperatature']), name="temperature")
         recurrent_autoregressive = autoregressive_gru.AutoregressiveGRU(
             output_dim=config_dict['output_dim'],
             output_len=config_dict['output_len'],
