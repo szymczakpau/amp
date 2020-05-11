@@ -54,7 +54,12 @@ class VeltriAMPClassifier(discriminator.Discriminator):
             x = input_
 
         emb = self.call_layer_on_input(self.dense_emb, x)
-        self.dense_emb.set_weights(self.embedding.get_weights())
+        try:
+            self.dense_emb.set_weights(self.embedding.get_weights())
+        except ValueError:
+            if hasattr(self.embedding, 'loaded_weights'):
+                self.dense_emb.set_weights(self.embedding.loaded_weights)
+
         self.dense_emb.trainable = self.embedding.trainable
 
         conv = self.call_layer_on_input(self.convolution, emb)
