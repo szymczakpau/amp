@@ -89,6 +89,7 @@ class MasterAMPTrainer(amp_model.Model):
 
     def get_config_dict(self) -> Dict:
         return {
+            'type': type(self).__name__,
             'encoder_config_dict': self.encoder.get_config_dict(),
             'decoder_config_dict': self.decoder.get_config_dict(),
             'discriminator_config_dict': self.discriminator.get_config_dict(),
