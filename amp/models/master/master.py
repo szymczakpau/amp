@@ -1,20 +1,19 @@
-from typing import Optional
+from typing import Optional, Dict
 
+from keras import backend
 from keras import layers
 from keras import models
 from keras import optimizers
 
 from amp.layers import vae_loss
+from amp.models import model as amp_model
 from amp.models.encoders import encoder as amp_encoder
 from amp.models.decoders import decoder as amp_decoder
 from amp.models.discriminators import discriminator as amp_discriminator
 from amp.utils import metrics
 
 
-class DataGenerator:
-    pass
-
-class MasterAMPTrainer:
+class MasterAMPTrainer(amp_model.Model):
 
     def __init__(
             self,
@@ -87,3 +86,43 @@ class MasterAMPTrainer:
                 ]
         )
         return vae
+
+    def get_config_dict(self) -> Dict:
+        return {
+            'encoder_config_dict': self.encoder.get_config_dict(),
+            'decoder_config_dict': self.decoder.get_config_dict(),
+            'discriminator_config_dict': self.discriminator.get_config_dict(),
+        }
+
+    @classmethod
+    def from_config_dict_and_layer_collection(
+            cls,
+            config_dict: Dict,
+            layer_collection: amp_model.ModelLayerCollection,
+    ) -> "MasterAMPTrainer":
+        return cls(
+            encoder=amp_encoder.Encoder.from_config_dict_and_layer_collection(
+                config_dict=config_dict['encoder_config_dict'],
+                layer_collection=layer_collection,
+            ),
+            decoder=amp_decoder.Decoder.from_config_dict_and_layer_collection(
+                config_dict=config_dict['decoder_config_dict'],
+                layer_collection=layer_collection,
+            ),
+            discriminator=amp_discriminator.Discriminator.from_config_dict_and_layer_collection(
+                config_dict=config_dict['discriminator_config_dict'],
+                layer_collection=layer_collection,
+            ),
+            kl_weight=backend.variable(0.1),
+            master_optimizer=optimizers.Adam(lr=1e-3),
+        )
+
+    def get_layers_with_names(self) -> Dict[str, layers.Layer]:
+        layers_with_names = {}
+        for name, layer in self.encoder.get_layers_with_names():
+            layers_with_names[name] = layer
+        for name, layer in self.decoder.get_layers_with_names():
+            layers_with_names[name] = layer
+        for name, layer in self.discriminator.get_layers_with_names():
+            layers_with_names[name] = layer
+        return layers_with_names

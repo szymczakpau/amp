@@ -1,5 +1,6 @@
 from typing import Dict
 
+from keras import backend
 from keras import layers
 from keras import models
 import tensorflow as tf
@@ -15,8 +16,8 @@ class AMPDecoder(decoder.Decoder):
             self,
             latent_dim: int,
             dense: layers.Dense,
-            recurrent_autoregressive: layers.Recurrent,
-            activation: layers.Layer,
+            recurrent_autoregressive: autoregressive_gru.AutoregressiveGRU,
+            activation: gumbel_softmax.GumbelSoftmax,
             name: str = 'AMPDecoder'
     ):
         self.latent_dim = latent_dim
@@ -42,13 +43,15 @@ class AMPDecoder(decoder.Decoder):
             'type': type(self).__name__,
             'name': self.name,
             'latent_dim': self.latent_dim,
+            'gumbel_temperatature': backend.eval(self.activation.temperature),
+            'output_dim' : self.latent_to_hidden.output_dim,
+            'output_len': self.latent_to_hidden.output_len,
         }
 
     def get_layers_with_names(self) -> Dict[str, layers.Layer]:
         return {
-            f'{self.name}_latent_to_hidden': self.latent_to_hidden,
+            f'{self.name}_latent_to_hidden': self.latent_to_hidden.recurrent,
             f'{self.name}_dense': self.dense,
-            f'{self.name}_activation': self.activation,
         }
 
     @classmethod
@@ -57,13 +60,21 @@ class AMPDecoder(decoder.Decoder):
             config_dict: Dict,
             layer_collection: model.ModelLayerCollection,
     ) -> "AMPDecoder":
+        temperature = backend.variable(config_dict['gumbel_temperatature'], name="temperature")
+        recurrent_autoregressive = autoregressive_gru.AutoregressiveGRU(
+            output_dim=config_dict['output_dim'],
+            output_len=config_dict['output_len'],
+            recurrent=layer_collection[config_dict['name'] + '_latent_to_hidden'],
+        )
         return cls(
             name=config_dict['name'],
             latent_dim=config_dict['latent_dim'],
-            recurrent_autoregressive=layer_collection[config_dict['name'] + '_latent_to_hidden'],
+            recurrent_autoregressive=recurrent_autoregressive,
             dense=layer_collection[config_dict['name'] + '_dense'],
-            activation=layer_collection[config_dict['name'] + '_activation'],
+            activation=gumbel_softmax.GumbelSoftmax(temperature=temperature)
         )
+
+
 class AMPDecoderFactory:
 
     @staticmethod
