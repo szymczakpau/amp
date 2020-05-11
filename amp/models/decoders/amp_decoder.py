@@ -66,6 +66,8 @@ class AMPDecoder(decoder.Decoder):
             output_len=config_dict['output_len'],
             recurrent=layer_collection[config_dict['name'] + '_latent_to_hidden'],
         )
+        if hasattr(recurrent_autoregressive.recurrent, 'loaded_weights'):
+            recurrent_autoregressive.recurrent.set_weights(recurrent_autoregressive.recurrent.loaded_weights)
         return cls(
             name=config_dict['name'],
             latent_dim=config_dict['latent_dim'],
