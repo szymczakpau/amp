@@ -33,8 +33,8 @@ class ClassifierDataManager():
         self.min_len = min_len
         self.max_len = max_len
         self.balanced_classes = balanced_classes
-        self.test_size = test_size + val_size
-        self.val_size = val_size / self.test_size
+        self.test_size = test_size
+        self.val_size = val_size
         self.vocab_size = vocab_size
 
         self.data_loader = ClassifierDataLoader(
@@ -94,15 +94,14 @@ class ClassifierDataManager():
             self.val_size,
             self.vocab_size
         )
-        x_train, x_test, x_val, y_train, y_test, y_val = self.data_splitter.get_train_test_val()
-        return x_train, x_test, x_val, y_train, y_test, y_val
+        return self.data_splitter.get_train_test_val()
 
     def get_classifier_data(self):
         self.load_data()
         self.filter_data()
         self.equalize_data()
-        x_train, x_test, x_val, y_train, y_test, y_val = self.split_data()
-        return x_train, x_test, x_val, y_train, y_test, y_val
+        return self.split_data()
+
 
 
 class ClassifierDataLoader():
@@ -257,6 +256,9 @@ class ClassifierDataSplitter():
         return self.merged
 
     def split(self, x, y):
+        self.test_size = self.test_size + self.val_size
+        self.val_size = self.val_size / self.test_size
+
         x_train, x_test, y_train, y_test = model_selection.train_test_split(
             x,
             y,
