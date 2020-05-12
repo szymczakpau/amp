@@ -1,16 +1,15 @@
+import random
+
 from keras.preprocessing import sequence
-from keras.preprocessing import text
 from sklearn import model_selection
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 sns.set(color_codes=True)
 
 import pandas as pd
 import numpy as np
 
-from amp.data_utils import fasta
 
 VOCAB_SIZE = 20
 
@@ -159,9 +158,6 @@ class ClassifierDataFilter():
         return self.positive_data, self.negative_data
 
 
-import random
-
-
 class ClassifierDataEqualizer():
     """Balance the distributions between the datasets"""
 
@@ -189,7 +185,6 @@ class ClassifierDataEqualizer():
         return probs
 
     def _draw_subsequences(self, df, new_lengths):
-
         new_lengths.sort(reverse=True)
         df = df.sort_values(by="Sequence length", ascending=False)
 
@@ -214,7 +209,6 @@ class ClassifierDataEqualizer():
         return new_df
 
     def balance_distributions(self):
-
         positive_seq = self.positive_data['Sequence'].tolist()
         positive_lengths = [len(seq) for seq in positive_seq]
 
@@ -263,7 +257,6 @@ class ClassifierDataSplitter():
         return self.merged
 
     def split(self, x, y):
-
         x_train, x_test, y_train, y_test = model_selection.train_test_split(
             x,
             y,
@@ -280,7 +273,8 @@ class ClassifierDataSplitter():
 
         return (x_train, x_test, x_val, y_train, y_test, y_val)
 
-    def _to_one_hot(self, x):
+    @staticmethod
+    def _to_one_hot(x):
         alphabet = list('ACDEFGHIKLMNPQRSTVWY')
         classes = range(1, 21)
         aa_encoding = dict(zip(alphabet, classes))
@@ -302,6 +296,10 @@ class ClassifierDataSplitter():
         y = np.asarray(self.merged['Label'].tolist())
 
         x = self._pad(self._to_one_hot(x))
+
+        if self.test_size == 0 and self.val_size == 0:
+            return x, y
+
         x_train, x_test, x_val, y_train, y_test, y_val = self.split(x, y)
 
         return x_train, x_test, x_val, y_train, y_test, y_val
