@@ -5,11 +5,9 @@ from typing import Optional
 from keras import layers
 from keras import models
 from keras import optimizers
-from keras import metrics as auc_metric
 
 from amp.models.discriminators import discriminator
 from amp.models import model
-from amp.utils import classifier_metrics as metrics
 
 class VeltriAMPClassifier(discriminator.Discriminator):
     """
@@ -76,13 +74,7 @@ class VeltriAMPClassifier(discriminator.Discriminator):
 
         model.compile(
             loss='binary_crossentropy',
-            metrics=[
-                'accuracy',
-                metrics.sensitivity,
-                metrics.specificity,
-                metrics.mcc,
-                auc_metric.AUC(),
-            ],
+            metrics=['accuracy'],
             optimizer=adam
         )
 
