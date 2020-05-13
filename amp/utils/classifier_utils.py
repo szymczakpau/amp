@@ -15,7 +15,6 @@ class ClassifierLogger(callbacks.Callback):
             self,
             out_path='./',
             patience=10,
-            lr=1e-3,
             lr_patience=3,
             out_fn='',
             log_fn=''
@@ -24,7 +23,6 @@ class ClassifierLogger(callbacks.Callback):
         self.path = out_path
         self.fn = out_fn
         self.patience = patience
-        self.lr = lr
         self.lr_patience = lr_patience
         self.no_improve = 0
         self.no_improve_lr = 0
@@ -63,8 +61,8 @@ class ClassifierLogger(callbacks.Callback):
             if self.no_improve >= self.patience:
                 self.model.stop_training = True
             if self.no_improve_lr >= self.lr_patience:
-                lr = float(backend.get_value(self.model.optimizer.lr))\
-                    .set_value(self.model.optimizer.lr, 0.75 * self.lr)
+                lr = float(backend.get_value(self.model.optimizer.lr))
+                backend.set_value(self.model.optimizer.lr, 0.75 * lr)
                 print("Setting lr to {}".format(0.75 * lr))
                 self.no_improve_lr = 0
 
