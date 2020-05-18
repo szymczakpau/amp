@@ -9,7 +9,6 @@ from keras import optimizers
 from amp.models.discriminators import discriminator
 from amp.models import model
 
-
 class VeltriAMPClassifier(discriminator.Discriminator):
     """
     The discriminator part of cVAE.
@@ -49,12 +48,17 @@ class VeltriAMPClassifier(discriminator.Discriminator):
 
     def output_tensor_with_dense_input(self, input_: Optional[Any]):
         if input_ is None:
-            x = layers.Input(shape=(self.input_shape[0], 20))
+            x = layers.Input(shape=(self.input_shape[0], 21))
         else:
             x = input_
 
         emb = self.call_layer_on_input(self.dense_emb, x)
-        self.dense_emb.set_weights(self.embedding.get_weights())
+        try:
+            self.dense_emb.set_weights(self.embedding.get_weights())
+        except ValueError:
+            if hasattr(self.embedding, 'loaded_weights'):
+                self.dense_emb.set_weights(self.embedding.loaded_weights)
+
         self.dense_emb.trainable = self.embedding.trainable
 
         conv = self.call_layer_on_input(self.convolution, emb)
@@ -80,11 +84,15 @@ class VeltriAMPClassifier(discriminator.Discriminator):
         self.embedding.trainable = False
         self.convolution.trainable = False
         self.lstm.trainable = False
+        self.dense_emb.trainable = False
+        self.dense_output.trainable = False
 
     def unfreeze_layers(self):
         self.embedding.trainable = True
         self.convolution.trainable = True
         self.lstm.trainable = True
+        self.dense_emb.trainable = True
+        self.dense_output.trainable = True
 
     def get_config_dict(self) -> Dict:
         return {
@@ -123,7 +131,7 @@ class VeltriAMPClassifierFactory:
     def get_default(max_length: int) -> VeltriAMPClassifier:
 
         emb = layers.Embedding(
-            input_dim=20,
+            input_dim=21,
             output_dim=128,
             input_length=max_length,
         )
@@ -145,5 +153,5 @@ class VeltriAMPClassifierFactory:
             convolution=conv,
             lstm=lstm,
             dense_output=dense_output,
-            input_shape=(max_length, 20)
+            input_shape=(max_length, 21)
         )

@@ -115,7 +115,7 @@ class AMPEncoderFactory:
             hidden=hidden,
             hidden_dim=hidden_dim,
             latent_dim=latent_dim,
-            input_shape=(max_length, 20),
+            input_shape=(max_length, 21),
             dense_z_mean=dense_z_mean,
             dense_z_sigma=dense_z_sigma,
         )

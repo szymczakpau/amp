@@ -36,7 +36,9 @@ class UniprotGenerator:
                 reader = csv.reader(csv_file)
                 current_batch = []
                 current_batch_index = 0
-                for row in reader:
+                for line_number, row in enumerate(reader):
+                    if line_number == 0:
+                        continue
                     current_batch.append(row[1])  # Only sequence
                     current_batch_index += 1
                     current_file_index += 1
@@ -50,7 +52,11 @@ class UniprotGenerator:
                             break
 
     def to_one_hot(self, x):
-        return [text.one_hot((" ".join(seq)), self.vocab_size) for seq in x]
+        alphabet = list('ACDEFGHIKLMNPQRSTVWY')
+        classes = range(1, 21)
+        aa_encoding = dict(zip(alphabet, classes))
+
+        return [[aa_encoding[aa] for aa in seq] for seq in x]
 
     def pad(self, x):
         return sequence.pad_sequences(

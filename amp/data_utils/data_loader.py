@@ -1,16 +1,15 @@
+import random
+
 from keras.preprocessing import sequence
-from keras.preprocessing import text
 from sklearn import model_selection
 
 import matplotlib.pyplot as plt
 import seaborn as sns
-
 sns.set(color_codes=True)
 
 import pandas as pd
 import numpy as np
 
-from amp.data_utils import fasta
 
 VOCAB_SIZE = 20
 
@@ -22,6 +21,7 @@ class ClassifierDataManager():
             negative_file,
             min_len,
             max_len,
+            balanced_classes: bool = False,
             test_size: int = 0.1,
             val_size: int = 0.1,
             vocab_size: int = VOCAB_SIZE,
@@ -32,8 +32,9 @@ class ClassifierDataManager():
         self.negative_data = None
         self.min_len = min_len
         self.max_len = max_len
-        self.test_size = test_size + val_size
-        self.val_size = val_size / self.test_size
+        self.balanced_classes = balanced_classes
+        self.test_size = test_size
+        self.val_size = val_size
         self.vocab_size = vocab_size
 
         self.data_loader = ClassifierDataLoader(
@@ -64,6 +65,7 @@ class ClassifierDataManager():
         self.data_equalizer = ClassifierDataEqualizer(
             self.positive_data,
             self.negative_data,
+            self.balanced_classes,
         )
         self.positive_data, self.negative_data = self.data_equalizer.balance()
         return self.positive_data, self.negative_data
@@ -92,15 +94,14 @@ class ClassifierDataManager():
             self.val_size,
             self.vocab_size
         )
-        x_train, x_test, x_val, y_train, y_test, y_val = self.data_splitter.get_train_test_val()
-        return x_train, x_test, x_val, y_train, y_test, y_val
+        return self.data_splitter.get_train_test_val()
 
     def get_classifier_data(self):
         self.load_data()
         self.filter_data()
         self.equalize_data()
-        x_train, x_test, x_val, y_train, y_test, y_val = self.split_data()
-        return x_train, x_test, x_val, y_train, y_test, y_val
+        return self.split_data()
+
 
 
 class ClassifierDataLoader():
@@ -156,9 +157,6 @@ class ClassifierDataFilter():
         return self.positive_data, self.negative_data
 
 
-import random
-
-
 class ClassifierDataEqualizer():
     """Balance the distributions between the datasets"""
 
@@ -166,10 +164,12 @@ class ClassifierDataEqualizer():
             self,
             positive_data,
             negative_data,
+            balanced_classes,
     ):
 
         self.positive_data = positive_data
         self.negative_data = negative_data
+        self.balanced_classes = balanced_classes
 
     def _get_probs(self, lengths):
         probs = {}
@@ -184,7 +184,6 @@ class ClassifierDataEqualizer():
         return probs
 
     def _draw_subsequences(self, df, new_lengths):
-
         new_lengths.sort(reverse=True)
         df = df.sort_values(by="Sequence length", ascending=False)
 
@@ -209,7 +208,6 @@ class ClassifierDataEqualizer():
         return new_df
 
     def balance_distributions(self):
-
         positive_seq = self.positive_data['Sequence'].tolist()
         positive_lengths = [len(seq) for seq in positive_seq]
 
@@ -218,7 +216,11 @@ class ClassifierDataEqualizer():
         self.negative_data.loc[:, "Sequence length"] = negative_lengths
 
         probs = self._get_probs(positive_lengths)
-        new_negative_lengths = random.choices(list(probs.keys()), probs.values(), k=len(negative_lengths))
+        if self.balanced_classes:
+            k = len(positive_lengths)
+        else:
+            k = len(negative_lengths)
+        new_negative_lengths = random.choices(list(probs.keys()), probs.values(), k=k)
         self.negative_data = self._draw_subsequences(self.negative_data, new_negative_lengths)
         return self.positive_data, self.negative_data
 
@@ -254,6 +256,9 @@ class ClassifierDataSplitter():
         return self.merged
 
     def split(self, x, y):
+        self.test_size = self.test_size + self.val_size
+        self.val_size = self.val_size / self.test_size
+
         x_train, x_test, y_train, y_test = model_selection.train_test_split(
             x,
             y,
@@ -270,8 +275,13 @@ class ClassifierDataSplitter():
 
         return (x_train, x_test, x_val, y_train, y_test, y_val)
 
-    def _to_one_hot(self, x):
-        return [text.one_hot((" ".join(seq)), self.vocab_size) for seq in x]
+    @staticmethod
+    def _to_one_hot(x):
+        alphabet = list('ACDEFGHIKLMNPQRSTVWY')
+        classes = range(1, 21)
+        aa_encoding = dict(zip(alphabet, classes))
+
+        return [[aa_encoding[aa] for aa in seq] for seq in x]
 
     def _pad(self, x):
         return sequence.pad_sequences(
@@ -288,6 +298,10 @@ class ClassifierDataSplitter():
         y = np.asarray(self.merged['Label'].tolist())
 
         x = self._pad(self._to_one_hot(x))
+
+        if self.test_size == 0 and self.val_size == 0:
+            return x, y
+
         x_train, x_test, x_val, y_train, y_test, y_val = self.split(x, y)
 
         return x_train, x_test, x_val, y_train, y_test, y_val
