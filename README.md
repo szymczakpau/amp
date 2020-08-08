@@ -1,2 +1,1 @@
-# Variational Autoencoder for AMP generation 
-
+# Semi-supervised variational autoencoder for antimicrobial peptide generation
