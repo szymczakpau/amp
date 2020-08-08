@@ -23,7 +23,7 @@ class ClassifierLogger(callbacks.Callback):
         self.patience = patience
         self.no_improve = 0
 
-    def on_epoch_end(self, epoch):
+    def on_epoch_end(self, epoch, logs={}):
         cv_pred = self.model.predict(self.validation_data[0], batch_size=1024)
         cv_true = self.validation_data[1]
         cv_pred_bin = np.where(cv_pred > 0.5, 1, 0)
