@@ -31,13 +31,11 @@ class ClassifierLogger(callbacks.Callback):
         auc_val = metrics.roc_auc_score(cv_true, cv_pred)
         if self.f1 < f1_val:
             self.no_improve = 0
-            self.no_improve_lr = 0
             print("Epoch %s - best F1: %s, AUC %s" % (epoch, round(f1_val, 4), round(auc_val, 4)))
             self.f1 = f1_val
             self.model.save(self.path + self.fn, overwrite=True)
         else:
             self.no_improve += 1
-            self.no_improve_lr += 1
             print("Epoch %s - current F1: %s, AUC: %s" % (epoch, round(f1_val, 4), round(auc_val, 4)))
             if self.no_improve >= self.patience:
                 self.model.stop_training = True
