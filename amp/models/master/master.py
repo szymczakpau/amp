@@ -62,7 +62,7 @@ class MasterAMPTrainer(amp_model.Model):
         self.discriminator.freeze_layers()
 
         vae = models.Model(
-            inputs=[inputs, amp_in],
+            inputs=[inputs, amp_in, noise_in],
             outputs=[discriminator_output, y]
             )
 
