@@ -84,6 +84,7 @@ class ClassifierDataManager():
         ax3.set_title("Negative")
 
         plt.show()
+        return fig
 
     def split_data(self):
         self.data_splitter = ClassifierDataSplitter(
