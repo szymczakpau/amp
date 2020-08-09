@@ -77,7 +77,7 @@ class ClassifierDataManager():
         negative_seq = self.negative_data['Sequence'].tolist()
         negative_lengths = [len(seq) for seq in negative_seq]
 
-        fig, (ax2, ax3) = plt.subplots(figsize=(12, 6), ncols=2)
+        fig, (ax2, ax3) = plt.subplots(figsize=(15, 4), ncols=2)
         sns.distplot(positive_lengths, ax=ax2)
         sns.distplot(negative_lengths, ax=ax3)
         ax2.set_title("Positive")
