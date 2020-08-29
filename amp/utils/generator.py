@@ -14,6 +14,8 @@ def concatenated_generator(
         amp_x,
         amp_y,
         batch_size,
+        latent_dim
+
 ):
     amp_x_gen = array_generator(amp_x, batch_size)
     amp_y_gen = array_generator(amp_y, batch_size)
@@ -30,7 +32,7 @@ def concatenated_generator(
         result_x = np.concatenate([batch_amp_x, batch_uniprot_x])
         result_amp = np.concatenate([batch_amp_y, batch_uniprot_y])
 
-        noise_in = np.random.normal(0, 0.1, size=(result_amp.shape[0], 64))
+        noise_in = np.random.normal(0, 0.1, size=(result_amp.shape[0], latent_dim))
 
         yield [
                   result_x,
