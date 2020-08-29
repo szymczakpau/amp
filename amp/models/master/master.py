@@ -1,4 +1,5 @@
-from typing import Optional, Dict
+from typing import Optional, Dict, Any
+import tensorflow as tf
 
 from keras import backend
 from keras import layers
@@ -37,10 +38,19 @@ class MasterAMPTrainer(amp_model.Model):
     def _zero_loss(y_true, y_pred):
         return tf.constant(0.0)
 
+    @staticmethod
+    def sampling(input_: Optional[Any] = None):
+        noise_in, z_mean, z_sigma = input_
+        return z_mean + backend.exp(z_sigma / 2) * noise_in
+
+
     def build(self, input_shape: Optional):
         inputs = layers.Input(shape=(input_shape[0],))
         z_mean, z_sigma, z = self.encoder.output_tensor(inputs)
         amp_in = layers.Input(shape=(1,))
+        noise_in = layers.Input(shape=(64,))
+        z = layers.Lambda(self.sampling, output_shape=(64,))
+        z = z([noise_in, z_mean, z_sigma])
         z_cond = layers.concatenate([z, amp_in])
         reconstructed = self.decoder.output_tensor(z_cond)
         y = vae_loss.VAELoss(
@@ -52,7 +62,7 @@ class MasterAMPTrainer(amp_model.Model):
         self.discriminator.freeze_layers()
 
         vae = models.Model(
-            inputs=[inputs, amp_in],
+            inputs=[inputs, amp_in, noise_in],
             outputs=[discriminator_output, y]
             )
 
