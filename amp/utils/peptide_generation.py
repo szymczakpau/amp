@@ -11,9 +11,9 @@ def generate_unconstrained(
         positive: bool,
         pca: bool,
         class_selection: bool,
-        decoder = decoder_model,
-        classifier = classifier_model,
-        pca_decomposer = pca_decomposer,
+        decoder,
+        classifier,
+        pca_decomposer,
         latent_dim: int = 64,
 
 ):
