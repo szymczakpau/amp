@@ -114,7 +114,7 @@ def improve_single_peptide(
                 if translate_generated_peptide(candidate) == translate_peptide(template):
                     continue
 
-                sequence.append(translate_peptide(candidate))
+                sequence.append(translate_generated_peptide(candidate))
                 amp_prob.append(predicted_class[0][0])
 
     df = pd.DataFrame.from_dict(
