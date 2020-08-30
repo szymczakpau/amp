@@ -24,8 +24,9 @@ def generate_unconstrained(
     generated = []
     pos_or_neg = 1 if positive else 0
     class_min, class_max = (0.8, 1.0) if positive else (0.0, 0.2)
-
+    counter = 0
     while len(generated) < n:
+        counter += 1
         z = np.random.normal(size=(1, latent_dim))
         if pca:
             z = pca_decomposer.inverse_transform(z)
@@ -45,6 +46,7 @@ def generate_unconstrained(
         if (peptide, class_prob) not in generated:
             generated.append((peptide, class_prob))
 
+    print(f'Generated {counter} peptides, {n} passed')
     return generated
 
 
@@ -74,6 +76,8 @@ def improve_peptides(
         if 0.8 <= prob <= 1.0:
             improved.append((peptide, prob))
             originals.append((org_peptide, org_prob[0]))
+
+    print(f'Improved {len(improved)} peptides, {len(input_sequences)-len(improved)} unimproved')
 
     return originals, improved
 
