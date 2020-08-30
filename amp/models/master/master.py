@@ -12,7 +12,7 @@ from amp.models.encoders import amp_encoder
 from amp.models.decoders import amp_decoder
 from amp.models.encoders import encoder as enc
 from amp.models.decoders import decoder as dec
-from amp.models.discriminators import veltri_amp_classifier
+from amp.models.discriminators import noconv_amp_classifier
 from amp.models.discriminators import discriminator as disc
 from amp.utils import metrics
 
@@ -43,7 +43,6 @@ class MasterAMPTrainer(amp_model.Model):
         noise_in, z_mean, z_sigma = input_
         return z_mean + backend.exp(z_sigma / 2) * noise_in
 
-
     def build(self, input_shape: Optional):
         inputs = layers.Input(shape=(input_shape[0],))
         z_mean, z_sigma, z = self.encoder.output_tensor(inputs)
@@ -64,7 +63,7 @@ class MasterAMPTrainer(amp_model.Model):
         vae = models.Model(
             inputs=[inputs, amp_in, noise_in],
             outputs=[discriminator_output, y]
-            )
+        )
 
         kl_metric = metrics.kl_loss(z_mean, z_sigma)
 
@@ -74,20 +73,20 @@ class MasterAMPTrainer(amp_model.Model):
         reconstruction_acc = metrics.sparse_categorical_accuracy(inputs, reconstructed)
 
         def _reconstruction_acc(y_true, y_pred):
-          return reconstruction_acc
+            return reconstruction_acc
 
         rcl = metrics.reconstruction_loss(inputs, reconstructed)
 
         def _rcl(y_true, y_pred):
-          return rcl
+            return rcl
 
         amino_acc, empty_acc = metrics.get_generation_acc()(inputs, reconstructed)
 
         def _amino_acc(y_true, y_pred):
-          return amino_acc
+            return amino_acc
 
         def _empty_acc(y_true, y_pred):
-          return empty_acc
+            return empty_acc
 
         vae.compile(
             optimizer=self.master_optimizer,
@@ -96,7 +95,7 @@ class MasterAMPTrainer(amp_model.Model):
             metrics=[
                 ['acc', 'binary_crossentropy'],
                 [_kl_metric, _rcl, _reconstruction_acc, _amino_acc, _empty_acc]
-                ]
+            ]
         )
         return vae
 
@@ -123,7 +122,7 @@ class MasterAMPTrainer(amp_model.Model):
                 config_dict=config_dict['decoder_config_dict'],
                 layer_collection=layer_collection,
             ),
-            discriminator=veltri_amp_classifier.VeltriAMPClassifier.from_config_dict_and_layer_collection(
+            discriminator=noconv_amp_classifier.NoConvAMPClassifier.from_config_dict_and_layer_collection(
                 config_dict=config_dict['discriminator_config_dict'],
                 layer_collection=layer_collection,
             ),
